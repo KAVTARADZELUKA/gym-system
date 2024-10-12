@@ -18,6 +18,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -57,8 +60,12 @@ public class TraineeControllerTest {
         user.setPassword("testPassword");
         trainee.setUser(user);
 
+        Map<String, String> response = new HashMap<>();
+        response.put("username",trainee.getUser().getUsername());
+        response.put("password", "testPassword");
+
         when(traineeConverter.convert(any(TraineeRegistrationRequest.class))).thenReturn(trainee);
-        when(traineeService.createTraineeProfile(any(Trainee.class))).thenReturn(trainee);
+        when(traineeService.createTraineeProfile(any(Trainee.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/trainee")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -40,11 +40,8 @@ public class TraineeController {
         Timer timer = meterRegistry.timer("trainee.registration.timer");
 
         return timer.record(() -> {
-            Trainee trainee = traineeService.createTraineeProfile(traineeConverter.convert(request));
+            Map<String, String> response = traineeService.createTraineeProfile(traineeConverter.convert(request));
 
-            Map<String, String> response = new HashMap<>();
-            response.put("username", trainee.getUser().getUsername());
-            response.put("password", trainee.getUser().getPassword());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         });
     }

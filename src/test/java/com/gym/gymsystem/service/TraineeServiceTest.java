@@ -9,10 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -41,7 +38,7 @@ class TraineeServiceTest {
         when(userService.generateUserData(any(User.class))).thenReturn(null);
         when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
 
-        Trainee result = traineeService.createTraineeProfile(trainee);
+        Map<String, String> result = traineeService.createTraineeProfile(trainee);
 
         assertNotNull(result);
         verify(userService).generateUserData(trainee.getUser());

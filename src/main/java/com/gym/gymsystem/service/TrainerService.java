@@ -11,12 +11,11 @@ import com.gym.gymsystem.repository.TrainerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class TrainerService {
@@ -26,13 +25,15 @@ public class TrainerService {
     private final UserService userService;
     private final TrainingService trainingService;
     private final TrainingTypeService trainingTypeService;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public TrainerService(TrainerRepository trainerRepository, UserService userService, TrainingService trainingService, TrainingTypeService trainingTypeService) {
+    public TrainerService(TrainerRepository trainerRepository, UserService userService, TrainingService trainingService, TrainingTypeService trainingTypeService, PasswordEncoder passwordEncoder) {
         this.trainerRepository = trainerRepository;
         this.userService = userService;
         this.trainingService = trainingService;
         this.trainingTypeService = trainingTypeService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -51,22 +52,26 @@ public class TrainerService {
         return trainer;
     }
 
-    public Trainer createTrainerProfile(Trainer trainer) {
+    public Map<String, String> createTrainerProfile(Trainer trainer) {
         logger.info("Creating trainer profile: {}", trainer);
         userService.generateUserData(trainer.getUser());
+        String password = userService.generateRandomPassword();
+        trainer.getUser().setPassword(passwordEncoder.encode(password));
+
         List<TrainingType> trainingTypes = new ArrayList<>();
         TrainingType trainingType = null;
         for (TrainingType type : trainer.getSpecializations()) {
             trainingType = trainingTypeService.getTrainingTypeByName(type.getTrainingTypeName());
-            if (trainingType == null) {
-                trainingType = new TrainingType();
-                trainingType.setTrainingTypeName(type.getTrainingTypeName());
-                trainingTypeService.save(trainingType);
-            }
         }
         trainingTypes.add(trainingType);
         trainer.setSpecializations(trainingTypes);
-        return trainerRepository.save(trainer);
+        trainerRepository.save(trainer);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("username",trainer.getUser().getUsername());
+        response.put("password", password);
+
+        return response;
     }
 
 

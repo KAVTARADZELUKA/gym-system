@@ -14,7 +14,7 @@ public class ErrorResponse {
     private LocalDateTime timestamp;
     private Map<String, String> errors;
 
-    public ErrorResponse(int status, String message, LocalDateTime timestamp){
+    public ErrorResponse(int status, String message, LocalDateTime timestamp) {
         this.status = status;
         this.message = message;
         this.timestamp = timestamp;

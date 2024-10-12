@@ -9,11 +9,14 @@ import com.gym.gymsystem.exception.TraineeNotFoundException;
 import com.gym.gymsystem.repository.TraineeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -23,12 +26,14 @@ public class TraineeService {
     private final TraineeRepository traineeRepository;
     private final TrainingService trainingService;
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
 
-    public TraineeService(TraineeRepository traineeRepository, TrainingService trainingService, UserService userService) {
+    public TraineeService(TraineeRepository traineeRepository, TrainingService trainingService, UserService userService, PasswordEncoder passwordEncoder) {
         this.traineeRepository = traineeRepository;
         this.trainingService = trainingService;
         this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Trainee fromUpdateRequest(UpdateTraineeProfileRequest updateRequest, Trainee trainee) {
@@ -49,10 +54,18 @@ public class TraineeService {
         return trainee;
     }
 
-    public Trainee createTraineeProfile(Trainee trainee) {
+    public Map<String, String> createTraineeProfile(Trainee trainee) {
         logger.info("Creating trainee profile: {}", trainee);
         userService.generateUserData(trainee.getUser());
-        return traineeRepository.save(trainee);
+        String password = userService.generateRandomPassword();
+        trainee.getUser().setPassword(passwordEncoder.encode(password));
+        traineeRepository.save(trainee);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("username",trainee.getUser().getUsername());
+        response.put("password", password);
+
+        return response;
     }
 
     public List<Trainee> getAllTrainees() {
@@ -66,9 +79,7 @@ public class TraineeService {
 
     public TraineeProfileResponse getTraineeProfileAndTrainersByUsername(String findUsername) {
         Trainee trainee = getTraineeProfileByUsername(findUsername);
-        if (trainee == null) {
-            throw new TraineeNotFoundException("Trainee not found");
-        }
+
         List<Training> trainings = trainingService.getTrainingByTraineesContaining(trainee);
 
         List<TrainerInfo> trainerInfoList = trainings.stream()
@@ -76,7 +87,7 @@ public class TraineeService {
                         .map(trainer -> new TrainerInfo(trainer.getUser().getUsername(),
                                 trainer.getUser().getFirstName(),
                                 trainer.getUser().getLastName(),
-                                trainer.getSpecializations().get(0).getTrainingTypeName()))
+                                trainer.getSpecializations().getFirst().getTrainingTypeName()))
                 )
                 .toList();
 

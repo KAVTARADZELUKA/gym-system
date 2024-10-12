@@ -6,6 +6,7 @@ import com.gym.gymsystem.exception.InvalidOldPasswordException;
 import com.gym.gymsystem.exception.UserNotFoundException;
 import com.gym.gymsystem.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,10 +15,13 @@ import java.util.*;
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    protected UserService(UserRepository userRepository) {
+    protected UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+
+        this.passwordEncoder = passwordEncoder;
     }
 
     public String generateRandomPassword() {
@@ -29,10 +33,9 @@ public class UserService {
                 || user.getLastName() == null || user.getLastName().isEmpty()) {
             throw new BlankRegistrationRequestException("firstName and LastName cannot be blank");
         }
-        String password = generateRandomPassword();
-        user.setPassword(password);
         user.setUsername(generateUsername(user.getFirstName(), user.getLastName()));
         user.setIsActive(true);
+
         return user;
     }
 
@@ -84,7 +87,7 @@ public class UserService {
         if (user == null) {
             return false;
         }
-        return password.equals(user.getPassword());
+        return passwordEncoder.matches(password,user.getPassword());
     }
 
     @Transactional
