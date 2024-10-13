@@ -5,7 +5,12 @@ import com.gym.gymsystem.exception.BlankRegistrationRequestException;
 import com.gym.gymsystem.exception.InvalidOldPasswordException;
 import com.gym.gymsystem.exception.UserNotFoundException;
 import com.gym.gymsystem.repository.UserRepository;
+import com.gym.gymsystem.util.JwtTokenUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +27,26 @@ public class UserService {
         this.userRepository = userRepository;
 
         this.passwordEncoder = passwordEncoder;
+    }
+
+    public Map<String, String> generateToken(HttpServletRequest request, AuthenticationManager authenticationManager,
+                                             JwtTokenUtil jwtTokenUtil) {
+        String authorizationHeader = request.getHeader("Authorization");
+        String base64Credentials = authorizationHeader.substring("Basic ".length()).trim();
+        String credentials = new String(Base64.getDecoder().decode(base64Credentials));
+        final String[] values = credentials.split(":", 2);
+
+        String username = values[0];
+        String password = values[1];
+
+        Authentication authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+        Authentication authentication = authenticationManager.authenticate(authenticationToken);
+        String token = jwtTokenUtil.generateToken(authentication.getName());
+
+        Map<String, String> response = new HashMap<>();
+        response.put("token", token);
+        return response;
+
     }
 
     public String generateRandomPassword() {
@@ -87,7 +112,7 @@ public class UserService {
         if (user == null) {
             return false;
         }
-        return passwordEncoder.matches(password,user.getPassword());
+        return passwordEncoder.matches(password, user.getPassword());
     }
 
     @Transactional
