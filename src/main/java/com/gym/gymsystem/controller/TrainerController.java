@@ -7,6 +7,8 @@ import com.gym.gymsystem.dto.user.Message;
 import com.gym.gymsystem.dto.user.UpdateStatusRequest;
 import com.gym.gymsystem.entity.Trainee;
 import com.gym.gymsystem.entity.Trainer;
+import com.gym.gymsystem.exception.CustomAccessDeniedException;
+import com.gym.gymsystem.service.AuthorizationService;
 import com.gym.gymsystem.service.TrainerService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -26,11 +28,13 @@ public class TrainerController {
     private final Converter<TrainerRegistrationRequest, Trainer> trainerConverter;
     private final TrainerService trainerService;
     private final MeterRegistry meterRegistry;
+    private final AuthorizationService authorizationService;
 
-    public TrainerController(Converter<TrainerRegistrationRequest, Trainer> trainerConverter, TrainerService trainerService, MeterRegistry meterRegistry) {
+    public TrainerController(Converter<TrainerRegistrationRequest, Trainer> trainerConverter, TrainerService trainerService, MeterRegistry meterRegistry, AuthorizationService authorizationService) {
         this.trainerConverter = trainerConverter;
         this.trainerService = trainerService;
         this.meterRegistry = meterRegistry;
+        this.authorizationService = authorizationService;
     }
 
     @PostMapping
@@ -47,6 +51,9 @@ public class TrainerController {
     @GetMapping("/{findUsername}")
     public ResponseEntity<TrainerProfileResponse> getTrainerProfile(
             @PathVariable("findUsername") String findUsername) {
+        if (!authorizationService.isAdmin()  && !authorizationService.isAuthenticatedUser(findUsername)) {
+            throw new CustomAccessDeniedException("You do not have permission to get this trainer's profile.");
+        }
         TrainerProfileResponse response = trainerService.getTrainerProfileAndTraineesByUsername( findUsername);
         return ResponseEntity.ok(response);
     }
@@ -55,6 +62,9 @@ public class TrainerController {
     public ResponseEntity<TrainerProfileResponse> updateTrainerProfile(
             @PathVariable("trainerUsername") String trainerUsername,
             @RequestBody @Valid UpdateTrainerProfileRequest request) {
+        if (!authorizationService.isAdmin() && !authorizationService.isAuthenticatedUser(trainerUsername)) {
+            throw new CustomAccessDeniedException("You do not have permission to update this trainer's profile.");
+        }
         TrainerProfileResponse response = trainerService.updateProfile( trainerUsername,request);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(response);
     }

@@ -9,6 +9,8 @@ import com.gym.gymsystem.dto.user.Message;
 import com.gym.gymsystem.entity.Trainer;
 import com.gym.gymsystem.entity.Training;
 import com.gym.gymsystem.entity.TrainingType;
+import com.gym.gymsystem.exception.CustomAccessDeniedException;
+import com.gym.gymsystem.service.AuthorizationService;
 import com.gym.gymsystem.service.TraineeService;
 import com.gym.gymsystem.service.TrainerService;
 import com.gym.gymsystem.service.TrainingService;
@@ -25,16 +27,21 @@ public class TrainingController {
     private final TrainingService trainingService;
     private final TraineeService traineeService;
     private final TrainerService trainerService;
+    private final AuthorizationService authorizationService;
 
-    public TrainingController(TrainingService trainingService, TraineeService traineeService, TrainerService trainerService) {
+    public TrainingController(TrainingService trainingService, TraineeService traineeService, TrainerService trainerService, AuthorizationService authorizationService) {
         this.trainingService = trainingService;
         this.traineeService = traineeService;
         this.trainerService = trainerService;
+        this.authorizationService = authorizationService;
     }
 
     @GetMapping("/not-assigned-active-trainers")
     public ResponseEntity<List<TrainerInfo>> getNotAssignedActiveTrainers(
             @RequestParam("findUsername") String findUsername) {
+        if (!authorizationService.isAdmin() && !authorizationService.isTrainer() && !authorizationService.isAuthenticatedUser(findUsername)) {
+            throw new CustomAccessDeniedException("You do not have permission to get this trainee's not assigned trainers.");
+        }
         List<Trainer> availableTrainers = trainingService.getTrainersNotAssignedToTrainee(findUsername);
         List<TrainerInfo> trainerInfos = availableTrainers.stream()
                 .map(trainer -> new TrainerInfo(
@@ -55,6 +62,9 @@ public class TrainingController {
             @RequestParam("findUsername") String findUsername,
             @RequestBody UpdateTraineeTrainersRequest request) {
 
+        if (!authorizationService.isAdmin()  && !authorizationService.isAuthenticatedUser(findUsername)) {
+            throw new CustomAccessDeniedException("You do not have permission to update this trainee's trainers.");
+        }
         List<Training> updatedTrainers = trainingService.updateTraineeTrainersByUsername(findUsername, request.getTrainersUsernames());
         List<TrainerInfo> trainerInfos = updatedTrainers.stream()
                 .flatMap(training -> training.getTrainers().stream())
@@ -81,6 +91,9 @@ public class TrainingController {
             @RequestParam(value = "trainerName", required = false) String trainerName,
             @RequestParam(value = "trainingType", required = false) String trainingType) {
 
+        if (!authorizationService.isAdmin() && !authorizationService.isTrainer() && !authorizationService.isAuthenticatedUser(traineeUsername)) {
+            throw new CustomAccessDeniedException("You do not have permission to get this trainee's trainings.");
+        }
         List<Training> trainings = trainingService.findTrainingsByTraineeAndCriteria(
                 traineeUsername,
                 LocalDate.parse(periodFrom).atStartOfDay(), LocalDate.parse(periodTo).atStartOfDay(),
@@ -107,6 +120,10 @@ public class TrainingController {
             @RequestParam(value = "traineeName", required = false) String traineeName,
             @RequestParam(value = "trainingType", required = false) String trainingType) {
 
+        if (!authorizationService.isAdmin() && !authorizationService.isAuthenticatedUser(trainerUsername)) {
+            throw new CustomAccessDeniedException("You do not have permission to get this trainer's trainings.");
+        }
+
         List<Training> trainings = trainingService.findTrainingsByTrainerAndCriteria(
                 trainerUsername,
                 LocalDate.parse(periodFrom).atStartOfDay(), LocalDate.parse(periodTo).atStartOfDay(),
@@ -127,6 +144,9 @@ public class TrainingController {
 
     @PostMapping
     public ResponseEntity<Message> addTraining(@RequestBody @Valid AddTrainingRequest request) {
+        if (!authorizationService.isAdmin() && !authorizationService.isAuthenticatedUser(request.getTrainerUsername())) {
+            throw new CustomAccessDeniedException("You do not have permission to add trainings.");
+        }
         TrainingType type = new TrainingType();
         type.setTrainingTypeName(request.getTrainingType());
 

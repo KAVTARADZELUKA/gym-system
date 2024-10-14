@@ -136,10 +136,10 @@ public class UserService {
     public Boolean changePassword(String username, String oldPassword, String newPassword) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        if (!oldPassword.equals(user.getPassword())) {
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             throw new InvalidOldPasswordException("Old password is incorrect");
         }
-        user.setPassword(newPassword);
+        user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
         return true;

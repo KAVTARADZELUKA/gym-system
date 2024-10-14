@@ -58,6 +58,10 @@ public class TrainerService {
         String password = userService.generateRandomPassword();
         trainer.getUser().setPassword(passwordEncoder.encode(password));
 
+        Set<String> roles = new HashSet<>();
+        roles.add("ROLE_TRAINER");
+        trainer.getUser().setRoles(roles);
+
         List<TrainingType> trainingTypes = new ArrayList<>();
         TrainingType trainingType = null;
         for (TrainingType type : trainer.getSpecializations()) {

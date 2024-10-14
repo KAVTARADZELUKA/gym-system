@@ -3,6 +3,9 @@ package com.gym.gymsystem.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Data
 @Table(name = "USERS")
@@ -15,6 +18,7 @@ public class User {
     @Column(unique = true)
     private String username;
     private String password;
-    private String role;
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<String> roles = new HashSet<>();
     private Boolean isActive;
 }

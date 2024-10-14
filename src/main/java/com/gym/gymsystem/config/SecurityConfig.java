@@ -46,6 +46,19 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/trainee").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/trainer").permitAll()
+                        .requestMatchers( "/api/auth/change-password").permitAll()
+
+                        .requestMatchers(HttpMethod.PUT,"/api/trainee/*").hasAnyRole("ADMIN", "TRAINEE")
+                        .requestMatchers(HttpMethod.DELETE,"/api/trainee/*").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH,"/api/trainee/status/*").hasAnyRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.GET,"/api/trainer/*").hasAnyRole("ADMIN", "TRAINER")
+                        .requestMatchers(HttpMethod.PUT,"/api/trainer/*").hasAnyRole("ADMIN", "TRAINER")
+                        .requestMatchers(HttpMethod.PATCH,"/api/trainer/status/*").hasAnyRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.PUT,"/api/training/trainers").hasAnyRole("ADMIN", "TRAINEE")
+                        .requestMatchers(HttpMethod.GET,"/api/training/trainer").hasAnyRole("ADMIN", "TRAINER")
+                        .requestMatchers(HttpMethod.POST,"/api/training").hasAnyRole("ADMIN", "TRAINER")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(basic -> basic

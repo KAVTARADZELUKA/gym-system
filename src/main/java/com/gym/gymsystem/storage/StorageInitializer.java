@@ -16,7 +16,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class StorageInitializer implements SmartInitializingSingleton {
@@ -56,9 +59,6 @@ public class StorageInitializer implements SmartInitializingSingleton {
                 User user = new User();
                 user.setFirstName(parts[1]);
                 user.setLastName(parts[2]);
-                user.setUsername(userService.generateUsername(user.getFirstName(), user.getLastName()));
-                user.setPassword(userService.generateRandomPassword());
-                user.setIsActive(true);
 
                 trainee.setUser(user);
                 trainee.setAddress(parts[3]);
@@ -84,10 +84,6 @@ public class StorageInitializer implements SmartInitializingSingleton {
 
                 user.setFirstName(parts[1]);
                 user.setLastName(parts[2]);
-
-                user.setUsername(userService.generateUsername(user.getFirstName(), user.getLastName()));
-                user.setPassword(userService.generateRandomPassword());
-                user.setIsActive(true);
 
                 trainingType = trainingTypeService.getTrainingTypeByNameForInitializer(parts[3]);
 

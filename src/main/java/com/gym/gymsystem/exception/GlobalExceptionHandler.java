@@ -27,6 +27,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(CustomAccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(CustomAccessDeniedException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+
     @ExceptionHandler(TrainingTypeNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleTrainingTypeNotFoundException(TrainingTypeNotFoundException ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(

@@ -14,10 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class TraineeService {
@@ -59,6 +56,9 @@ public class TraineeService {
         userService.generateUserData(trainee.getUser());
         String password = userService.generateRandomPassword();
         trainee.getUser().setPassword(passwordEncoder.encode(password));
+        Set<String> roles = new HashSet<>();
+        roles.add("ROLE_TRAINEE");
+        trainee.getUser().setRoles(roles);
         traineeRepository.save(trainee);
 
         Map<String, String> response = new HashMap<>();

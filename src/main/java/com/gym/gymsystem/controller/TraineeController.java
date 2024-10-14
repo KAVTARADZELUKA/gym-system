@@ -7,6 +7,8 @@ import com.gym.gymsystem.dto.trainee.UpdateTraineeProfileRequest;
 import com.gym.gymsystem.dto.user.Message;
 import com.gym.gymsystem.dto.user.UpdateStatusRequest;
 import com.gym.gymsystem.entity.Trainee;
+import com.gym.gymsystem.exception.CustomAccessDeniedException;
+import com.gym.gymsystem.service.AuthorizationService;
 import com.gym.gymsystem.service.TraineeService;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -27,12 +29,14 @@ public class TraineeController {
     private final Converter<TraineeRegistrationRequest, Trainee> traineeConverter;
     private final MeterRegistry meterRegistry;
     private final Counter traineeDeletionCounter;
+    private final AuthorizationService authorizationService;
 
-    public TraineeController(TraineeService traineeService, Converter<TraineeRegistrationRequest, Trainee> traineeConverter, MeterRegistry meterRegistry) {
+    public TraineeController(TraineeService traineeService, Converter<TraineeRegistrationRequest, Trainee> traineeConverter, MeterRegistry meterRegistry, AuthorizationService authorizationService) {
         this.traineeService = traineeService;
         this.traineeConverter = traineeConverter;
         this.meterRegistry = meterRegistry;
         this.traineeDeletionCounter = meterRegistry.counter("trainee.deletion.count");
+        this.authorizationService = authorizationService;
     }
 
     @PostMapping
@@ -49,6 +53,9 @@ public class TraineeController {
     @GetMapping("/{findUsername}")
     public ResponseEntity<TraineeProfileResponse> getTraineeProfile(
             @PathVariable("findUsername") String findUsername) {
+        if (!authorizationService.isAdmin() && !authorizationService.isTrainer() && !authorizationService.isAuthenticatedUser(findUsername)) {
+            throw new CustomAccessDeniedException("You do not have permission to get this trainee's profile.");
+        }
         TraineeProfileResponse response = traineeService.getTraineeProfileAndTrainersByUsername(findUsername);
         return ResponseEntity.ok(response);
     }
@@ -57,6 +64,9 @@ public class TraineeController {
     public ResponseEntity<TraineeProfileResponse> updateTraineeProfile(
             @PathVariable("traineeUsername") String traineeUsername,
             @RequestBody @Valid UpdateTraineeProfileRequest request) {
+        if (!authorizationService.isAdmin() && !authorizationService.isAuthenticatedUser(traineeUsername)) {
+            throw new CustomAccessDeniedException("You do not have permission to update this trainee's profile.");
+        }
         Trainee trainee = traineeService.getTraineeProfileByUsername(traineeUsername);
         traineeService.updateTraineeProfile(traineeService.fromUpdateRequest(request, trainee));
         TraineeProfileResponse response = traineeService.getTraineeProfileAndTrainersByUsername(traineeUsername);
