@@ -47,6 +47,10 @@ public class JwtTokenUtil {
         return extractAllClaims(token).getExpiration().before(new Date());
     }
 
+    public Date getExpirationDateFromToken(String token) {
+        return extractAllClaims(token).getExpiration();
+    }
+
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(secretKey)

@@ -4,6 +4,7 @@ import com.gym.gymsystem.filter.JwtAuthenticationFilter;
 import com.gym.gymsystem.security.CustomAuthenticationEntryPoint;
 import com.gym.gymsystem.security.CustomAuthenticationProvider;
 import com.gym.gymsystem.service.CustomUserDetailsService;
+import com.gym.gymsystem.service.TokenBlacklistService;
 import com.gym.gymsystem.util.JwtTokenUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,13 +28,15 @@ public class SecurityConfig {
     private final CustomAuthenticationProvider authenticationProvider;
     private final JwtTokenUtil jwtTokenUtil;
     private final CustomUserDetailsService customUserDetailsService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public SecurityConfig(CustomAuthenticationEntryPoint entryPoint,
-                          @Lazy CustomAuthenticationProvider authenticationProvider, JwtTokenUtil jwtTokenUtil, CustomUserDetailsService customUserDetailsService) {
+                          @Lazy CustomAuthenticationProvider authenticationProvider, JwtTokenUtil jwtTokenUtil, CustomUserDetailsService customUserDetailsService, TokenBlacklistService tokenBlacklistService) {
         this.entryPoint = entryPoint;
         this.authenticationProvider = authenticationProvider;
         this.jwtTokenUtil = jwtTokenUtil;
         this.customUserDetailsService = customUserDetailsService;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Bean
@@ -56,7 +59,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtRequestFilter() {
-        return new JwtAuthenticationFilter(jwtTokenUtil,customUserDetailsService);
+        return new JwtAuthenticationFilter(jwtTokenUtil, customUserDetailsService, tokenBlacklistService);
     }
 
     @Bean

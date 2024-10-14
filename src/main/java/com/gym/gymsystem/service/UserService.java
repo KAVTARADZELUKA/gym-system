@@ -1,5 +1,6 @@
 package com.gym.gymsystem.service;
 
+import com.gym.gymsystem.dto.user.Message;
 import com.gym.gymsystem.entity.User;
 import com.gym.gymsystem.exception.BlankRegistrationRequestException;
 import com.gym.gymsystem.exception.InvalidOldPasswordException;
@@ -8,6 +9,7 @@ import com.gym.gymsystem.repository.UserRepository;
 import com.gym.gymsystem.util.JwtTokenUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -27,6 +29,21 @@ public class UserService {
         this.userRepository = userRepository;
 
         this.passwordEncoder = passwordEncoder;
+    }
+
+    public Message logout(HttpServletRequest req, JwtTokenUtil jwtTokenUtil,TokenBlacklistService tokenBlacklistService) {
+        String token = req.getHeader("Authorization");
+
+        if (token != null && token.startsWith("Bearer ")) {
+            String jwtToken = token.substring(7);
+
+            long expirationInSeconds = jwtTokenUtil.getExpirationDateFromToken(jwtToken).getTime() - System.currentTimeMillis();
+            expirationInSeconds = expirationInSeconds / 1000;
+
+            tokenBlacklistService.blacklistToken(jwtToken, expirationInSeconds);
+            return new Message("Logged out successfully.");
+        }
+        throw new InvalidOldPasswordException("No token provided");
     }
 
     public Map<String, String> generateToken(HttpServletRequest request, AuthenticationManager authenticationManager,

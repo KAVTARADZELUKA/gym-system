@@ -3,6 +3,7 @@ package com.gym.gymsystem.controller;
 import com.gym.gymsystem.dto.user.ChangePasswordRequest;
 import com.gym.gymsystem.dto.user.LoginRequest;
 import com.gym.gymsystem.dto.user.Message;
+import com.gym.gymsystem.service.TokenBlacklistService;
 import com.gym.gymsystem.service.UserService;
 import com.gym.gymsystem.util.JwtTokenUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,12 +27,21 @@ public class UserController {
     private final UserService userService;
     private final JwtTokenUtil jwtTokenUtil;
     private final AuthenticationManager authenticationManager;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Autowired
-    public UserController(UserService userService, JwtTokenUtil jwtTokenUtil, AuthenticationManager authenticationManager) {
+    public UserController(UserService userService, JwtTokenUtil jwtTokenUtil,
+                          AuthenticationManager authenticationManager,
+                          TokenBlacklistService tokenBlacklistService) {
         this.userService = userService;
         this.jwtTokenUtil = jwtTokenUtil;
         this.authenticationManager = authenticationManager;
+        this.tokenBlacklistService = tokenBlacklistService;
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        return ResponseEntity.ok(userService.logout(request,jwtTokenUtil,tokenBlacklistService));
     }
 
     @PostMapping("/login")
