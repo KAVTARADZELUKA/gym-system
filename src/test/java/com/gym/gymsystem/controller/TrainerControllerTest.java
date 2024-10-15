@@ -8,8 +8,11 @@ import com.gym.gymsystem.dto.user.UpdateStatusRequest;
 import com.gym.gymsystem.entity.Trainer;
 import com.gym.gymsystem.entity.TrainingType;
 import com.gym.gymsystem.entity.User;
+import com.gym.gymsystem.service.AuthorizationService;
 import com.gym.gymsystem.service.TrainerService;
 import com.gym.gymsystem.service.TrainingTypeService;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -20,9 +23,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -33,7 +40,12 @@ public class TrainerControllerTest {
     private TrainerService trainerService;
 
     @Mock
+    private MeterRegistry meterRegistry;
+
+    @Mock
     private TrainingTypeService trainingTypeService;
+    @Mock
+    private AuthorizationService authorizationService;
 
 
     @InjectMocks
@@ -50,6 +62,13 @@ public class TrainerControllerTest {
         MockitoAnnotations.openMocks(this);
         this.mockMvc = MockMvcBuilders.standaloneSetup(trainerController).build();
         this.objectMapper = new ObjectMapper();
+        when(meterRegistry.timer("trainer.registration.timer")).thenReturn(mock(Timer.class));
+
+        Timer timer = meterRegistry.timer("trainer.registration.timer");
+        doAnswer(invocation -> {
+            Supplier<?> supplier = invocation.getArgument(0);
+            return supplier.get();
+        }).when(timer).record(any(Supplier.class));
     }
 
     @Test
@@ -65,8 +84,12 @@ public class TrainerControllerTest {
         user.setPassword("password123");
         trainer.setUser(user);
 
+        Map<String, String> response = new HashMap<>();
+        response.put("username","trainerUser");
+        response.put("password", "password123");
+
         when(trainerConverter.convert(any(TrainerRegistrationRequest.class))).thenReturn(trainer);
-        when(trainerService.createTrainerProfile(any(Trainer.class))).thenReturn(trainer);
+        when(trainerService.createTrainerProfile(any(Trainer.class))).thenReturn(response);
 
 
         mockMvc.perform(post("/api/trainer")
@@ -83,6 +106,7 @@ public class TrainerControllerTest {
         TrainerProfileResponse response = new TrainerProfileResponse();
         response.setFirstName("trainerUser");
 
+        when(authorizationService.isAdmin()).thenReturn(true);
         when(trainerService.getTrainerProfileAndTraineesByUsername(anyString()))
                 .thenReturn(response);
 
@@ -106,6 +130,7 @@ public class TrainerControllerTest {
         user.setUsername("trainerUser");
         trainer.setUser(user);
 
+        when(authorizationService.isAdmin()).thenReturn(true);
         when(trainerService.getTrainerProfileByUsername(anyString())).thenReturn(trainer);
         when(trainingTypeService.getTrainingTypeByName(anyString())).thenReturn(new TrainingType());
         when(trainerService.getTrainerProfileAndTraineesByUsername(anyString()))

@@ -9,10 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,6 +24,8 @@ class TrainerServiceTest {
 
     @Mock
     private UserService userService;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @Mock
     private TrainingTypeService trainingTypeService;
@@ -52,16 +53,27 @@ class TrainerServiceTest {
     public void testCreateTrainerProfile() {
         Trainer trainer = new Trainer();
         trainer.setUser(new User());
-        trainer.setSpecializations(List.of(new TrainingType()));
+        TrainingType trainingType = new TrainingType();
+        trainingType.setTrainingTypeName("Yoga");
+
+        List<TrainingType> specializations = List.of(trainingType);
+        trainer.setSpecializations(specializations);
+
         when(userService.generateUserData(any(User.class))).thenReturn(null);
+        when(userService.generateRandomPassword()).thenReturn("randomPassword");
+        when(passwordEncoder.encode("randomPassword")).thenReturn("encodedPassword");
         when(trainerRepository.save(any(Trainer.class))).thenReturn(trainer);
+        when(trainingTypeService.getTrainingTypeByName("Yoga")).thenReturn(trainingType);
 
-
-        Trainer result = trainerService.createTrainerProfile(trainer);
+        Map<String, String> result = trainerService.createTrainerProfile(trainer);
 
         assertNotNull(result);
+
         verify(userService).generateUserData(trainer.getUser());
+        verify(userService).generateRandomPassword();
+        verify(passwordEncoder).encode("randomPassword");
         verify(trainerRepository).save(trainer);
+        verify(trainingTypeService).getTrainingTypeByName("Yoga");
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.gym.gymsystem.service;
 
+import com.gym.gymsystem.dto.trainer.TrainerInfo;
 import com.gym.gymsystem.entity.Trainee;
 import com.gym.gymsystem.entity.Trainer;
 import com.gym.gymsystem.entity.Training;
@@ -59,8 +60,19 @@ public class TrainingService {
         return trainingRepository.findTrainingsByTrainerAndCriteria(findUsername, fromDate, toDate, trainerName, trainingType);
     }
 
-    public List<Trainer> getTrainersNotAssignedToTrainee(String findUsername) {
-        return trainingRepository.findTrainersNotAssignedToTrainee(findUsername);
+    public List<TrainerInfo> getTrainersNotAssignedToTrainee(String findUsername) {
+        List<Trainer> availableTrainers = trainingRepository.findTrainersNotAssignedToTrainee(findUsername);
+
+        return availableTrainers.stream()
+                .map(trainer -> new TrainerInfo(
+                        trainer.getUser().getUsername(),
+                        trainer.getUser().getFirstName(),
+                        trainer.getUser().getLastName(),
+                       trainer.getSpecializations().stream()
+                                .findFirst()
+                                .map(TrainingType::getTrainingTypeName).get()
+                ))
+                .toList();
     }
 
     public List<Training> getTrainingByTraineesContaining(Trainee trainee) {

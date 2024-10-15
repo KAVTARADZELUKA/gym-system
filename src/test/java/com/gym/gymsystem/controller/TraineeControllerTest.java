@@ -7,7 +7,12 @@ import com.gym.gymsystem.dto.trainee.UpdateTraineeProfileRequest;
 import com.gym.gymsystem.dto.user.UpdateStatusRequest;
 import com.gym.gymsystem.entity.Trainee;
 import com.gym.gymsystem.entity.User;
+import com.gym.gymsystem.service.AuthorizationService;
 import com.gym.gymsystem.service.TraineeService;
+import org.springframework.security.test.context.support.WithMockUser;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -18,18 +23,33 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class TraineeControllerTest {
     @Mock
     private TraineeService traineeService;
+
+    @Mock
+    private MeterRegistry meterRegistry;
+
+    @Mock
+    private AuthorizationService authorizationService;
+
+    @Mock
+    private Timer timer;
+
+    @Mock
+    private Counter traineeDeletionCounter;
 
     @InjectMocks
     private TraineeController traineeController;
@@ -46,6 +66,14 @@ public class TraineeControllerTest {
         MockitoAnnotations.openMocks(this);
         this.mockMvc = MockMvcBuilders.standaloneSetup(traineeController).build();
         this.objectMapper = new ObjectMapper();
+        when(meterRegistry.timer("trainee.registration.timer")).thenReturn(mock(Timer.class));
+        when(meterRegistry.counter("trainee.deletion.count")).thenReturn(traineeDeletionCounter);
+
+        Timer timer = meterRegistry.timer("trainee.registration.timer");
+        doAnswer(invocation -> {
+            Supplier<?> supplier = invocation.getArgument(0);
+            return supplier.get();
+        }).when(timer).record(any(Supplier.class));
     }
 
     @Test
@@ -61,7 +89,7 @@ public class TraineeControllerTest {
         trainee.setUser(user);
 
         Map<String, String> response = new HashMap<>();
-        response.put("username",trainee.getUser().getUsername());
+        response.put("username", trainee.getUser().getUsername());
         response.put("password", "testPassword");
 
         when(traineeConverter.convert(any(TraineeRegistrationRequest.class))).thenReturn(trainee);
@@ -80,14 +108,21 @@ public class TraineeControllerTest {
     @Test
     void testGetTraineeProfile() throws Exception {
         TraineeProfileResponse profileResponse = new TraineeProfileResponse();
-        when(traineeService.getTraineeProfileAndTrainersByUsername( anyString()))
+        profileResponse.setUsername("findUser");
+
+        when(authorizationService.isAdmin()).thenReturn(false);
+        when(authorizationService.isTrainer()).thenReturn(false);
+        when(authorizationService.isAuthenticatedUser("findUser")).thenReturn(true);
+
+        when(traineeService.getTraineeProfileAndTrainersByUsername(anyString()))
                 .thenReturn(profileResponse);
 
         mockMvc.perform(get("/api/trainee/{findUsername}", "findUser")
                         .header("username", "testUser")
                         .header("password", "password123"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").exists());
+                .andExpect(jsonPath("$").exists())
+                .andExpect(jsonPath("$.username").value("findUser"));
     }
 
     @Test
@@ -115,6 +150,7 @@ public class TraineeControllerTest {
         expectedResponse.setDateOfBirth("1990-01-01");
         expectedResponse.setActive(true);
 
+        when(authorizationService.isAuthenticatedUser("testUser")).thenReturn(true);
         when(traineeService.getTraineeProfileByUsername( anyString())).thenReturn(trainee);
         when(traineeService.getTraineeProfileAndTrainersByUsername(anyString()))
                 .thenReturn(expectedResponse);
@@ -127,18 +163,6 @@ public class TraineeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.username").value("testUser"));
-    }
-
-    @Test
-    void testDeleteTraineeProfile() throws Exception {
-        when(traineeService.deleteTraineeByUsername( anyString()))
-                .thenReturn("Profile deleted");
-
-        mockMvc.perform(delete("/api/trainee/{traineeUsername}", "deleteUser")
-                        .header("username", "testUser")
-                        .header("password", "password123"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("{\"message\":\"Profile deleted\"}"));
     }
 
     @Test

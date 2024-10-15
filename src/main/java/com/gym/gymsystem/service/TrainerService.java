@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -95,9 +96,7 @@ public class TrainerService {
 
     public TrainerProfileResponse getTrainerProfileAndTraineesByUsername(String findUsername) {
         Trainer trainer = getTrainerProfileByUsername(findUsername);
-        if (trainer == null) {
-            throw new TrainerNotFoundException("Trainer not found");
-        }
+
         List<Training> trainings = trainingService.getTrainingByTrainersContaining(trainer);
 
         List<TraineeInfo> traineeInfoList = trainings.stream()
@@ -119,7 +118,7 @@ public class TrainerService {
         );
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public Trainer updateTrainerProfile(Trainer trainer) {
         logger.info("Updating trainer profile: {}", trainer);
 

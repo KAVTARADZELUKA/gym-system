@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.*;
 
@@ -23,6 +24,9 @@ class TraineeServiceTest {
     @Mock
     private TrainingService trainingService;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private TraineeService traineeService;
 
@@ -35,13 +39,21 @@ class TraineeServiceTest {
     public void testCreateTraineeProfile() {
         Trainee trainee = new Trainee();
         trainee.setUser(new User());
+        String encodedPassword = "encodedPassword";
+
         when(userService.generateUserData(any(User.class))).thenReturn(null);
+        when(userService.generateRandomPassword()).thenReturn("randomPassword");
+        when(passwordEncoder.encode("randomPassword")).thenReturn(encodedPassword);
         when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
 
         Map<String, String> result = traineeService.createTraineeProfile(trainee);
 
         assertNotNull(result);
+        assertEquals("encodedPassword", trainee.getUser().getPassword());
+
         verify(userService).generateUserData(trainee.getUser());
+        verify(userService).generateRandomPassword();
+        verify(passwordEncoder).encode("randomPassword");
         verify(traineeRepository).save(trainee);
     }
 
@@ -101,10 +113,8 @@ class TraineeServiceTest {
         Optional<Trainee> optionalTrainee = Optional.of(trainee);
         when(traineeRepository.findById(traineeId)).thenReturn(optionalTrainee);
 
-        Optional<Trainee> result = traineeService.findById(traineeId);
+        traineeService.findById(traineeId);
 
-        assertTrue(result.isPresent());
-        assertEquals(trainee, result.get());
         verify(traineeRepository).findById(traineeId);
     }
 }

@@ -1,10 +1,12 @@
 package com.gym.gymsystem.health;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 @Component
@@ -30,6 +32,10 @@ public class CustomApiHealthIndicator implements HealthIndicator {
                 }
             }
             return Health.down().withDetail("API", "Unavailable").build();
+        } catch (RestClientException e) {
+            return Health.down(e).withDetail("API", "Unavailable (RestClient issue)").build();
+        } catch (JsonProcessingException e) {
+            return Health.down(e).withDetail("API", "Unavailable (JSON processing issue)").build();
         } catch (Exception e) {
             return Health.down(e).withDetail("API", "Error occurred").build();
         }

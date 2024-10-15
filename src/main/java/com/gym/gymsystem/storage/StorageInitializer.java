@@ -114,7 +114,7 @@ public class StorageInitializer implements SmartInitializingSingleton {
                 List<Trainee> traineeList = new ArrayList<>();
                 List<Trainer> trainerList = new ArrayList<>();
 
-                trainee = traineeService.findById(Long.parseLong(parts[0])).get();
+                trainee = traineeService.findById(Long.parseLong(parts[0]));
                 traineeList.add(trainee);
 
                 trainer = trainerService.findById(Long.parseLong(parts[1])).get();

@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -51,6 +52,7 @@ public class TraineeService {
         return trainee;
     }
 
+    @Transactional
     public Map<String, String> createTraineeProfile(Trainee trainee) {
         logger.info("Creating trainee profile: {}", trainee);
         userService.generateUserData(trainee.getUser());
@@ -68,6 +70,7 @@ public class TraineeService {
         return response;
     }
 
+    @Transactional
     public List<Trainee> getAllTrainees() {
         logger.info("Fetching all trainees");
         return traineeRepository.findAll();
@@ -77,6 +80,7 @@ public class TraineeService {
         return traineeRepository.findByUser_Username(findUsername).orElseThrow(() -> new TraineeNotFoundException("Trainee not found"));
     }
 
+    @Transactional
     public TraineeProfileResponse getTraineeProfileAndTrainersByUsername(String findUsername) {
         Trainee trainee = getTraineeProfileByUsername(findUsername);
 
@@ -102,15 +106,15 @@ public class TraineeService {
         );
     }
 
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public void updateTraineeStatus( String findUsername, boolean isActive) {
         Trainee trainee = getTraineeProfileByUsername(findUsername);
-        if (trainee == null) {
-            throw new TraineeNotFoundException("Trainee not found");
-        }
+
         trainee.getUser().setIsActive(isActive);
         traineeRepository.save(trainee);
     }
 
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public Trainee updateTraineeProfile( Trainee trainee) {
         logger.info("Updating trainee profile: {}", trainee);
         if (trainee.getId() == null) {
@@ -136,8 +140,8 @@ public class TraineeService {
         return "The Trainee has been deleted";
     }
 
-    public Optional<Trainee> findById(Long traineeId) {
-        return traineeRepository.findById(traineeId);
+    public Trainee findById(Long traineeId) {
+        return traineeRepository.findById(traineeId).orElseThrow(() -> new TraineeNotFoundException("Trainee not found"));
     }
 
     public Trainee findByUsername(String traineeUsername) {

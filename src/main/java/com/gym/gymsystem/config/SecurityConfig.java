@@ -59,6 +59,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT,"/api/training/trainers").hasAnyRole("ADMIN", "TRAINEE")
                         .requestMatchers(HttpMethod.GET,"/api/training/trainer").hasAnyRole("ADMIN", "TRAINER")
                         .requestMatchers(HttpMethod.POST,"/api/training").hasAnyRole("ADMIN", "TRAINER")
+                        .requestMatchers("/actuator").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(basic -> basic

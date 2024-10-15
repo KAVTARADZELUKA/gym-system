@@ -36,24 +36,13 @@ public class TrainingController {
         this.authorizationService = authorizationService;
     }
 
-    @GetMapping("/not-assigned-active-trainers")
+    @GetMapping("/trainers/not-assigned")
     public ResponseEntity<List<TrainerInfo>> getNotAssignedActiveTrainers(
             @RequestParam("findUsername") String findUsername) {
         if (!authorizationService.isAdmin() && !authorizationService.isTrainer() && !authorizationService.isAuthenticatedUser(findUsername)) {
             throw new CustomAccessDeniedException("You do not have permission to get this trainee's not assigned trainers.");
         }
-        List<Trainer> availableTrainers = trainingService.getTrainersNotAssignedToTrainee(findUsername);
-        List<TrainerInfo> trainerInfos = availableTrainers.stream()
-                .map(trainer -> new TrainerInfo(
-                        trainer.getUser().getUsername(),
-                        trainer.getUser().getFirstName(),
-                        trainer.getUser().getLastName(),
-                        trainer.getSpecializations().stream()
-                                .findFirst()
-                                .map(TrainingType::getTrainingTypeName)
-                                .orElse("No specialization")
-                ))
-                .toList();
+        List<TrainerInfo> trainerInfos = trainingService.getTrainersNotAssignedToTrainee(findUsername);
         return ResponseEntity.ok(trainerInfos);
     }
 
@@ -74,8 +63,7 @@ public class TrainingController {
                         trainer.getUser().getLastName(),
                         trainer.getSpecializations().stream()
                                 .findFirst()
-                                .map(TrainingType::getTrainingTypeName)
-                                .orElse("No specialization")
+                                .map(TrainingType::getTrainingTypeName).get()
                 ))
                 .distinct()
                 .toList();
@@ -135,9 +123,7 @@ public class TrainingController {
                         training.getTrainingDate() != null ? training.getTrainingDate().toString() : "N/A",
                         training.getTrainingType().getTrainingTypeName(),
                         training.getTrainingDuration(),
-                        (training.getTrainees() != null && !training.getTrainees().isEmpty())
-                                ? training.getTrainees().getFirst().getUser().getUsername()
-                                : "N/A"
+                        training.getTrainees().getFirst().getUser().getUsername()
                 )).toList();
         return ResponseEntity.ok(trainingInfos);
     }

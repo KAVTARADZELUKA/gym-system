@@ -1,5 +1,6 @@
 package com.gym.gymsystem.service;
 
+import com.gym.gymsystem.dto.trainer.TrainerInfo;
 import com.gym.gymsystem.entity.*;
 import com.gym.gymsystem.repository.TrainingRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,7 +83,7 @@ class TrainingServiceTest {
         List<Training> trainings = Arrays.asList(new Training(), new Training());
         when(trainingRepository.findTrainingsByTraineeAndCriteria(username, fromDate, toDate, trainerName, trainingType))
                 .thenReturn(trainings);
-List<Training> result = trainingService.findTrainingsByTraineeAndCriteria(username, fromDate, toDate, trainerName, trainingType);
+        List<Training> result = trainingService.findTrainingsByTraineeAndCriteria(username, fromDate, toDate, trainerName, trainingType);
 
         assertEquals(2, result.size());
         verify(trainingRepository).findTrainingsByTraineeAndCriteria(username, fromDate, toDate, trainerName, trainingType);
@@ -109,12 +110,43 @@ List<Training> result = trainingService.findTrainingsByTraineeAndCriteria(userna
     @Test
     public void testGetTrainersNotAssignedToTrainee() {
         String username = "testUser";
-        List<Trainer> trainers = Arrays.asList(new Trainer(), new Trainer());
+        TrainingType trainingType = new TrainingType();
+        trainingType.setTrainingTypeName("Yoga");
+
+        Trainer trainer1 = new Trainer();
+        User user1 = new User();
+        user1.setUsername("trainer1");
+        user1.setFirstName("John");
+        user1.setLastName("Doe");
+        trainer1.setUser(user1);
+        trainer1.setSpecializations(List.of(trainingType));
+
+        Trainer trainer2 = new Trainer();
+        User user2 = new User();
+        user2.setUsername("trainer2");
+        user2.setFirstName("Jane");
+        user2.setLastName("Smith");
+        trainer2.setUser(user2);
+        trainer2.setSpecializations(List.of(trainingType));
+
+        List<Trainer> trainers = Arrays.asList(trainer1, trainer2);
+
         when(trainingRepository.findTrainersNotAssignedToTrainee(username)).thenReturn(trainers);
 
-        List<Trainer> result = trainingService.getTrainersNotAssignedToTrainee(username);
+        List<TrainerInfo> result = trainingService.getTrainersNotAssignedToTrainee(username);
 
         assertEquals(2, result.size());
+
+        assertEquals("trainer1", result.get(0).getUsername());
+        assertEquals("John", result.get(0).getFirstName());
+        assertEquals("Doe", result.get(0).getLastName());
+        assertEquals("Yoga", result.get(0).getSpecialization());
+
+        assertEquals("trainer2", result.get(1).getUsername());
+        assertEquals("Jane", result.get(1).getFirstName());
+        assertEquals("Smith", result.get(1).getLastName());
+        assertEquals("Yoga", result.get(1).getSpecialization());
+
         verify(trainingRepository).findTrainersNotAssignedToTrainee(username);
     }
 

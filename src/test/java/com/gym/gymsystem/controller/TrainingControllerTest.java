@@ -1,9 +1,11 @@
 package com.gym.gymsystem.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gym.gymsystem.dto.trainer.TrainerInfo;
 import com.gym.gymsystem.dto.training.AddTrainingRequest;
 import com.gym.gymsystem.dto.training.UpdateTraineeTrainersRequest;
 import com.gym.gymsystem.entity.*;
+import com.gym.gymsystem.service.AuthorizationService;
 import com.gym.gymsystem.service.TraineeService;
 import com.gym.gymsystem.service.TrainerService;
 import com.gym.gymsystem.service.TrainingService;
@@ -33,6 +35,8 @@ public class TrainingControllerTest {
 
     @Mock
     private TraineeService traineeService;
+    @Mock
+    private AuthorizationService authorizationService;
 
     @Mock
     private TrainerService trainerService;
@@ -52,21 +56,17 @@ public class TrainingControllerTest {
 
     @Test
     void testGetNotAssignedActiveTrainers() throws Exception {
-        Trainer trainer = new Trainer();
-        User user = new User();
-        user.setUsername("activeTrainer");
-        user.setFirstName("Active");
-        user.setLastName("Trainer");
-        trainer.setUser(user);
-        TrainingType type = new TrainingType();
-        type.setTrainingTypeName("Personal");
-        trainer.setSpecializations(List.of(type));
+        TrainerInfo trainer = new TrainerInfo();;
+        trainer.setFirstName("Active");
+        trainer.setLastName("Trainer");
+        trainer.setUsername("activeTrainer");
+        trainer.setSpecialization("Personal");
 
-
+        when(authorizationService.isAdmin()).thenReturn(true);
         when(trainingService.getTrainersNotAssignedToTrainee( anyString()))
                 .thenReturn(List.of(trainer));
 
-        mockMvc.perform(get("/api/training/not-assigned-active-trainers")
+        mockMvc.perform(get("/api/training/trainers/not-assigned")
                         .header("username", "username")
                         .header("password", "password")
                         .param("findUsername", "traineeUser"))
@@ -104,6 +104,7 @@ public class TrainingControllerTest {
         Training training = new Training();
         training.setTrainers(Arrays.asList(trainer1, trainer2));
 
+        when(authorizationService.isAdmin()).thenReturn(true);
         when(trainingService.updateTraineeTrainersByUsername(anyString(), anyList()))
                 .thenReturn(List.of(training));
 
@@ -137,6 +138,7 @@ public class TrainingControllerTest {
         training.setTrainingType(trainingType);
         training.setTrainers(List.of(trainer1));
 
+        when(authorizationService.isAdmin()).thenReturn(true);
         when(trainingService.findTrainingsByTraineeAndCriteria(anyString(),
                 any(), any(), anyString(), anyString()))
                 .thenReturn(List.of(training));
@@ -175,6 +177,7 @@ public class TrainingControllerTest {
         training.setTrainees(List.of(trainee));
 
 
+        when(authorizationService.isAdmin()).thenReturn(true);
         when(trainingService.findTrainingsByTrainerAndCriteria(anyString(),
                 any(), any(), anyString(), anyString()))
                 .thenReturn(List.of(training));
@@ -218,6 +221,7 @@ public class TrainingControllerTest {
         user1.setPassword("testPassword");
         trainee.setUser(user1);
 
+        when(authorizationService.isAdmin()).thenReturn(true);
         when(traineeService.getTraineeProfileByUsername( anyString()))
                 .thenReturn(trainee);
         when(trainerService.findByUsername(anyString())).thenReturn(trainer1);
