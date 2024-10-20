@@ -1,0 +1,70 @@
+spring:
+  application:
+    name: gym-system
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.MySQLDialect
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+  redis:
+    host: localhost
+    port: 6379
+
+server:
+  servlet:
+    context-path: /api
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:mysql://localhost:3306/gym_system_db
+    username: root
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:mysql://localhost:3306/dev_gym_system_db
+    username: devuser
+    password: devpass
+
+---
+spring:
+  config:
+    activate:
+      on-profile: stg
+  datasource:
+    url: jdbc:mysql://localhost:3306/stg_gym_system_db
+    username: stguser
+    password: stgpass
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:mysql://prod-db-server:3306/prod_gym_system_db
+    username: produser
+    password: prodpass
