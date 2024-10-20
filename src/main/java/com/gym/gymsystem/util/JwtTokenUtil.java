@@ -8,13 +8,15 @@ import org.springframework.stereotype.Component;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
 public class JwtTokenUtil {
-    private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 10; // 10 hours
+    private static final long EXPIRATION_TIME = 10; // 10 hours
     private final SecretKey secretKey;
 
     public JwtTokenUtil() throws NoSuchAlgorithmException {
@@ -25,11 +27,14 @@ public class JwtTokenUtil {
 
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiration = now.plusHours(EXPIRATION_TIME);
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(username)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .setIssuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
+                .setExpiration(Date.from(expiration.atZone(ZoneId.systemDefault()).toInstant()))
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -44,7 +49,12 @@ public class JwtTokenUtil {
     }
 
     private boolean isTokenExpired(String token) {
-        return extractAllClaims(token).getExpiration().before(new Date());
+        LocalDateTime expiration = extractAllClaims(token).getExpiration()
+                .toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+
+        return expiration.isBefore(LocalDateTime.now());
     }
 
     public Date getExpirationDateFromToken(String token) {

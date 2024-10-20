@@ -21,6 +21,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import static com.gym.gymsystem.dto.user.Role.*;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -44,23 +46,26 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/trainee").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/trainer").permitAll()
-                        .requestMatchers( "/api/auth/change-password").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/trainee").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/trainer").permitAll()
+                        .requestMatchers( "/auth/change-password").permitAll()
+                        .requestMatchers( "/training-types").permitAll()
 
-                        .requestMatchers(HttpMethod.PUT,"/api/trainee/*").hasAnyRole("ADMIN", "TRAINEE")
-                        .requestMatchers(HttpMethod.DELETE,"/api/trainee/*").hasAnyRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH,"/api/trainee/status/*").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,"/trainee/*").hasAnyRole(ADMIN.getRole(), TRAINEE.getRole())
+                        .requestMatchers(HttpMethod.DELETE,"/trainee/*").hasAnyRole(ADMIN.getRole())
+                        .requestMatchers(HttpMethod.PATCH,"/trainee/status/*").hasAnyRole(ADMIN.getRole())
 
-                        .requestMatchers(HttpMethod.GET,"/api/trainer/*").hasAnyRole("ADMIN", "TRAINER")
-                        .requestMatchers(HttpMethod.PUT,"/api/trainer/*").hasAnyRole("ADMIN", "TRAINER")
-                        .requestMatchers(HttpMethod.PATCH,"/api/trainer/status/*").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,"/trainer/*").hasAnyRole(ADMIN.getRole(), TRAINER.getRole())
+                        .requestMatchers(HttpMethod.PUT,"/trainer/*").hasAnyRole(ADMIN.getRole(), TRAINER.getRole())
+                        .requestMatchers(HttpMethod.PATCH,"/trainer/status/*").hasAnyRole(ADMIN.getRole())
 
-                        .requestMatchers(HttpMethod.PUT,"/api/training/trainers").hasAnyRole("ADMIN", "TRAINEE")
-                        .requestMatchers(HttpMethod.GET,"/api/training/trainer").hasAnyRole("ADMIN", "TRAINER")
-                        .requestMatchers(HttpMethod.POST,"/api/training").hasAnyRole("ADMIN", "TRAINER")
+                        .requestMatchers(HttpMethod.PUT,"/training/trainee/*").hasAnyRole(ADMIN.getRole(), TRAINEE.getRole())
+                        .requestMatchers(HttpMethod.GET,"/training/trainer/*").hasAnyRole(ADMIN.getRole(), TRAINER.getRole())
+                        .requestMatchers(HttpMethod.POST,"/training").hasAnyRole(ADMIN.getRole(), TRAINER.getRole())
+
                         .requestMatchers("/actuator").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(basic -> basic

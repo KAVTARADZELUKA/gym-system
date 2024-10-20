@@ -23,6 +23,9 @@ management:
     host: localhost
     port: 6379
 
+server:
+  servlet:
+    context-path: /api
 ---
 spring:
   config:

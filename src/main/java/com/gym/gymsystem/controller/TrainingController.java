@@ -22,7 +22,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/api/training")
+@RequestMapping(value = "/training")
 public class TrainingController {
     private final TrainingService trainingService;
     private final TraineeService traineeService;
@@ -46,9 +46,9 @@ public class TrainingController {
         return ResponseEntity.ok(trainerInfos);
     }
 
-    @PutMapping("/trainers")
+    @PutMapping("/trainee/{traineeUsername}")
     public ResponseEntity<List<TrainerInfo>> updateTraineeTrainers(
-            @RequestParam("findUsername") String findUsername,
+            @PathVariable("traineeUsername") String findUsername,
             @RequestBody UpdateTraineeTrainersRequest request) {
 
         if (!authorizationService.isAdmin()  && !authorizationService.isAuthenticatedUser(findUsername)) {
@@ -71,9 +71,9 @@ public class TrainingController {
         return ResponseEntity.ok(trainerInfos);
     }
 
-    @GetMapping("/trainee")
+    @GetMapping("/trainee/{traineeUsername}")
     public ResponseEntity<List<TrainingInfo>> getTraineeTrainings(
-            @RequestParam("traineeUsername") String traineeUsername,
+            @PathVariable("traineeUsername") String traineeUsername,
             @RequestParam("periodFrom") String periodFrom,
             @RequestParam("periodTo") String periodTo,
             @RequestParam(value = "trainerName", required = false) String trainerName,
@@ -100,9 +100,9 @@ public class TrainingController {
         return ResponseEntity.ok(trainingInfos);
     }
 
-    @GetMapping("/trainer")
+    @GetMapping("/trainer/{trainerUsername}")
     public ResponseEntity<List<TrainingInfoForTrainer>> getTrainerTrainings(
-            @RequestParam("trainerUsername") String trainerUsername,
+            @PathVariable("trainerUsername") String trainerUsername,
             @RequestParam("periodFrom") String periodFrom,
             @RequestParam("periodTo") String periodTo,
             @RequestParam(value = "traineeName", required = false) String traineeName,

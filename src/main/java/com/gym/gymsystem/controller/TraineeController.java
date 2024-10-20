@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping(value = "/api/trainee")
+@RequestMapping(value = "/trainee")
 public class TraineeController {
     private final TraineeService traineeService;
     private final Converter<TraineeRegistrationRequest, Trainee> traineeConverter;

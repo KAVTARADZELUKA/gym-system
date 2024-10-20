@@ -4,6 +4,7 @@ import com.gym.gymsystem.entity.LoginAttempt;
 import com.gym.gymsystem.repository.LoginAttemptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -20,6 +21,7 @@ public class LoginAttemptService {
         this.loginAttemptRepository = loginAttemptRepository;
     }
 
+    @Transactional
     public void loginFailed(String username) {
         LoginAttempt loginAttempt = loginAttemptRepository.findByUsername(username)
                 .orElse(new LoginAttempt());
@@ -35,6 +37,7 @@ public class LoginAttemptService {
         loginAttemptRepository.save(loginAttempt);
     }
 
+    @Transactional
     public void loginSucceeded(String username) {
         LoginAttempt loginAttempt = loginAttemptRepository.findByUsername(username).orElse(null);
         if (loginAttempt != null) {
@@ -43,7 +46,7 @@ public class LoginAttemptService {
             loginAttemptRepository.save(loginAttempt);
         }
     }
-
+    @Transactional
     public boolean isBlocked(String username) {
         Optional<LoginAttempt> loginAttempt = loginAttemptRepository.findByUsername(username);
 

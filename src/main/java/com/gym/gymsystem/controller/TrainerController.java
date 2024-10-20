@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping(value = "/api/trainer")
+@RequestMapping(value = "/trainer")
 public class TrainerController {
     private final Converter<TrainerRegistrationRequest, Trainer> trainerConverter;
     private final TrainerService trainerService;
@@ -51,7 +51,7 @@ public class TrainerController {
     @GetMapping("/{findUsername}")
     public ResponseEntity<TrainerProfileResponse> getTrainerProfile(
             @PathVariable("findUsername") String findUsername) {
-        if (!authorizationService.isAdmin()  && !authorizationService.isAuthenticatedUser(findUsername)) {
+        if (!authorizationService.isAuthenticatedUser(findUsername)) {
             throw new CustomAccessDeniedException("You do not have permission to get this trainer's profile.");
         }
         TrainerProfileResponse response = trainerService.getTrainerProfileAndTraineesByUsername( findUsername);
@@ -62,7 +62,7 @@ public class TrainerController {
     public ResponseEntity<TrainerProfileResponse> updateTrainerProfile(
             @PathVariable("trainerUsername") String trainerUsername,
             @RequestBody @Valid UpdateTrainerProfileRequest request) {
-        if (!authorizationService.isAdmin() && !authorizationService.isAuthenticatedUser(trainerUsername)) {
+        if (!authorizationService.isAuthenticatedUser(trainerUsername)) {
             throw new CustomAccessDeniedException("You do not have permission to update this trainer's profile.");
         }
         TrainerProfileResponse response = trainerService.updateProfile( trainerUsername,request);
