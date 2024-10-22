@@ -42,7 +42,7 @@ public class TrainerService {
         return trainerRepository.findAll();
     }
 
-    public Trainer updateTrainerProfile(UpdateTrainerProfileRequest request, Trainer trainer) {
+    public Trainer updateTrainerProfileFromRequest(UpdateTrainerProfileRequest request, Trainer trainer) {
         if (request.getFirstName() != null) {
             trainer.getUser().setFirstName(request.getFirstName());
         }
@@ -53,6 +53,7 @@ public class TrainerService {
         return trainer;
     }
 
+    @Transactional
     public Map<String, String> createTrainerProfile(Trainer trainer) {
         logger.info("Creating trainer profile: {}", trainer);
         userService.generateUserData(trainer.getUser());
@@ -73,27 +74,25 @@ public class TrainerService {
         trainerRepository.save(trainer);
 
         Map<String, String> response = new HashMap<>();
-        response.put("username",trainer.getUser().getUsername());
+        response.put("username", trainer.getUser().getUsername());
         response.put("password", password);
 
         return response;
     }
-
-
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public TrainerProfileResponse updateProfile(String trainerUsername, UpdateTrainerProfileRequest request) {
         Trainer trainer = getTrainerProfileByUsername(trainerUsername);
         TrainingType trainingType = trainingTypeService.getTrainingTypeByName(request.getSpecialization());
         trainer.setSpecializations(List.of(trainingType));
-        updateTrainerProfile(updateTrainerProfile(request, trainer));
-        TrainerProfileResponse response = getTrainerProfileAndTraineesByUsername(trainerUsername);
-        return response;
+        updateTrainerProfile(updateTrainerProfileFromRequest(request, trainer));
+        return getTrainerProfileAndTraineesByUsername(trainerUsername);
     }
 
     public Trainer getTrainerProfileByUsername(String findUsername) {
 
         return trainerRepository.findByUser_Username(findUsername).orElseThrow(() -> new TrainerNotFoundException("Trainer not found"));
     }
-
+    @Transactional
     public TrainerProfileResponse getTrainerProfileAndTraineesByUsername(String findUsername) {
         Trainer trainer = getTrainerProfileByUsername(findUsername);
 
@@ -117,7 +116,6 @@ public class TrainerService {
                 traineeInfoList
         );
     }
-
     @Transactional(isolation = Isolation.REPEATABLE_READ)
     public Trainer updateTrainerProfile(Trainer trainer) {
         logger.info("Updating trainer profile: {}", trainer);
@@ -132,7 +130,8 @@ public class TrainerService {
                     .map(specialization -> trainingTypeService.getTrainingType(specialization.getId())
                             .orElseThrow(() -> new RuntimeException("TrainingType not found with ID: " + specialization.getId())))
                     .toList();
-            trainer.setSpecializations(managedSpecializations);
+
+            trainer.setSpecializations(new ArrayList<>(managedSpecializations));
         }
 
         return trainerRepository.save(trainer);
@@ -154,7 +153,7 @@ public class TrainerService {
     public List<Trainer> findAllByUser_UsernameIn(List<String> trainerUsernames) {
         return trainerRepository.findAllByUser_UsernameIn(trainerUsernames);
     }
-
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public void updateTraineeStatus(String findUsername, boolean isActive) {
         Trainer trainer = getTrainerProfileByUsername(findUsername);
         if (trainer == null) {

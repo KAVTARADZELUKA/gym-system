@@ -66,7 +66,7 @@ public class TrainingControllerTest {
         when(trainingService.getTrainersNotAssignedToTrainee( anyString()))
                 .thenReturn(List.of(trainer));
 
-        mockMvc.perform(get("/api/training/trainers/not-assigned")
+        mockMvc.perform(get("/training/trainers/not-assigned")
                         .header("username", "username")
                         .header("password", "password")
                         .param("findUsername", "traineeUser"))
@@ -108,10 +108,9 @@ public class TrainingControllerTest {
         when(trainingService.updateTraineeTrainersByUsername(anyString(), anyList()))
                 .thenReturn(List.of(training));
 
-        mockMvc.perform(put("/api/training/trainers")
+        mockMvc.perform(put("/training/trainee/{traineeUsername}", "traineeUser")
                         .header("username", "username")
                         .header("password", "password")
-                        .param("findUsername", "traineeUser")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -143,10 +142,9 @@ public class TrainingControllerTest {
                 any(), any(), anyString(), anyString()))
                 .thenReturn(List.of(training));
 
-        mockMvc.perform(get("/api/training/trainee")
+        mockMvc.perform(get("/training/trainee/{traineeUsername}", "traineeUser")
                         .header("username", "username")
                         .header("password", "password")
-                        .param("traineeUsername", "traineeUser")
                         .param("periodFrom", LocalDate.now().minusDays(30).toString())
                         .param("periodTo", LocalDate.now().toString())
                         .param("trainerName", "Active Trainer")
@@ -182,10 +180,9 @@ public class TrainingControllerTest {
                 any(), any(), anyString(), anyString()))
                 .thenReturn(List.of(training));
 
-        mockMvc.perform(get("/api/training/trainer")
+        mockMvc.perform(get("/training/trainer/{trainerUsername}", "trainerUser")
                         .header("username", "username")
                         .header("password", "password")
-                        .param("trainerUsername", "trainerUser")
                         .param("periodFrom", LocalDate.now().minusDays(30).toString())
                         .param("periodTo", LocalDate.now().toString())
                         .param("traineeName", "Active Trainee")
@@ -228,7 +225,7 @@ public class TrainingControllerTest {
         when(trainingService.createTraining( any(Training.class)))
                 .thenReturn(null);
 
-        mockMvc.perform(post("/api/training")
+        mockMvc.perform(post("/training")
                         .param("username", "username")
                         .param("password", "password")
                         .contentType(MediaType.APPLICATION_JSON)

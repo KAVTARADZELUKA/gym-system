@@ -95,7 +95,7 @@ public class TraineeControllerTest {
         when(traineeConverter.convert(any(TraineeRegistrationRequest.class))).thenReturn(trainee);
         when(traineeService.createTraineeProfile(any(Trainee.class))).thenReturn(response);
 
-        mockMvc.perform(post("/api/trainee")
+        mockMvc.perform(post("/trainee")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -117,7 +117,7 @@ public class TraineeControllerTest {
         when(traineeService.getTraineeProfileAndTrainersByUsername(anyString()))
                 .thenReturn(profileResponse);
 
-        mockMvc.perform(get("/api/trainee/{findUsername}", "findUser")
+        mockMvc.perform(get("/trainee/{findUsername}", "findUser")
                         .header("username", "testUser")
                         .header("password", "password123"))
                 .andExpect(status().isOk())
@@ -155,7 +155,7 @@ public class TraineeControllerTest {
         when(traineeService.getTraineeProfileAndTrainersByUsername(anyString()))
                 .thenReturn(expectedResponse);
 
-        mockMvc.perform(put("/api/trainee/{traineeUsername}", "testUser")
+        mockMvc.perform(put("/trainee/{traineeUsername}", "testUser")
                         .header("username", "testUser")
                         .header("password", "password123")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -170,7 +170,7 @@ public class TraineeControllerTest {
         UpdateStatusRequest request = new UpdateStatusRequest();
         request.setIsActive(true);
 
-        mockMvc.perform(patch("/api/trainee/status/{findUsername}", "findUser")
+        mockMvc.perform(patch("/trainee/status/{findUsername}", "findUser")
                         .header("username", "testUser")
                         .header("password", "password123")
                         .contentType(MediaType.APPLICATION_JSON)

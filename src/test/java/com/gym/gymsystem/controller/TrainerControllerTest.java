@@ -92,7 +92,7 @@ public class TrainerControllerTest {
         when(trainerService.createTrainerProfile(any(Trainer.class))).thenReturn(response);
 
 
-        mockMvc.perform(post("/api/trainer")
+        mockMvc.perform(post("/trainer")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -110,7 +110,7 @@ public class TrainerControllerTest {
         when(trainerService.getTrainerProfileAndTraineesByUsername(anyString()))
                 .thenReturn(response);
 
-        mockMvc.perform(get("/api/trainer/{findUsername}", "trainerUser")
+        mockMvc.perform(get("/trainer/{findUsername}", "trainerUser")
                         .header("username", "trainerUser")
                         .header("password", "password123"))
                 .andExpect(status().isOk())
@@ -136,7 +136,7 @@ public class TrainerControllerTest {
         when(trainerService.getTrainerProfileAndTraineesByUsername(anyString()))
                 .thenReturn(new TrainerProfileResponse());
 
-        mockMvc.perform(put("/api/trainer/{trainerUsername}", "trainerUser")
+        mockMvc.perform(put("/trainer/{trainerUsername}", "trainerUser")
                         .header("username", "adminUser")
                         .header("password", "adminPass")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -151,7 +151,7 @@ public class TrainerControllerTest {
         request.setIsActive(true);
         String findUsername = "trainerUser";
 
-        mockMvc.perform(patch("/api/trainer/status/{findUsername}", findUsername)
+        mockMvc.perform(patch("/trainer/status/{findUsername}", findUsername)
                         .header("username", "adminUser")
                         .header("password", "adminPass")
                         .contentType(MediaType.APPLICATION_JSON)
