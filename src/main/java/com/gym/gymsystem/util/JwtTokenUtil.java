@@ -5,11 +5,11 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.security.NoSuchAlgorithmException;
+import javax.crypto.spec.SecretKeySpec;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,10 +19,11 @@ public class JwtTokenUtil {
     private static final long EXPIRATION_TIME = 10; // 10 hours
     private final SecretKey secretKey;
 
-    public JwtTokenUtil() throws NoSuchAlgorithmException {
-        KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
-        keyGenerator.init(256);
-        this.secretKey = keyGenerator.generateKey();
+    public JwtTokenUtil() {
+        String encodedKey = "Qx34v1k9R2T/XjWoDkAp72dRvwC9Lp1Kw3n5lfVFEFI=";
+
+        byte[] decodedKey = Base64.getDecoder().decode(encodedKey);
+        this.secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "HmacSHA256");
     }
 
     public String generateToken(String username) {

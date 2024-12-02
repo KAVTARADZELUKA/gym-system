@@ -59,7 +59,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT,"/trainer/*").hasAnyRole(ADMIN.getRole(), TRAINER.getRole())
                         .requestMatchers(HttpMethod.PATCH,"/trainer/status/*").hasAnyRole(ADMIN.getRole())
 
-                        .requestMatchers(HttpMethod.PUT,"/training/trainee/*").hasAnyRole(ADMIN.getRole(), TRAINEE.getRole())
+                        .requestMatchers(HttpMethod.PUT,"/training/trainee/*").hasAnyRole(ADMIN.getRole())
                         .requestMatchers(HttpMethod.GET,"/training/trainer/*").hasAnyRole(ADMIN.getRole(), TRAINER.getRole())
                         .requestMatchers(HttpMethod.POST,"/training").hasAnyRole(ADMIN.getRole(), TRAINER.getRole())
 

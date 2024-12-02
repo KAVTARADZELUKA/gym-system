@@ -49,7 +49,7 @@ public class TrainerService {
         if (request.getLastName() != null) {
             trainer.getUser().setLastName(request.getLastName());
         }
-        trainer.getUser().setIsActive(request.isActive());
+        trainer.getUser().setIsActive(request.getIsActive());
         return trainer;
     }
 

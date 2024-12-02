@@ -11,5 +11,5 @@ public class UpdateTrainerProfileRequest {
     private String lastName;
     @NotBlank(message = "specialization is required")
     private String specialization;
-    private boolean isActive;
+    private Boolean isActive;
 }

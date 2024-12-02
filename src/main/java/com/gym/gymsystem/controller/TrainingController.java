@@ -6,10 +6,12 @@ import com.gym.gymsystem.dto.training.TrainingInfo;
 import com.gym.gymsystem.dto.training.TrainingInfoForTrainer;
 import com.gym.gymsystem.dto.training.UpdateTraineeTrainersRequest;
 import com.gym.gymsystem.dto.user.Message;
+import com.gym.gymsystem.dto.workload.WorkloadRequest;
 import com.gym.gymsystem.entity.Trainer;
 import com.gym.gymsystem.entity.Training;
 import com.gym.gymsystem.entity.TrainingType;
 import com.gym.gymsystem.exception.CustomAccessDeniedException;
+import com.gym.gymsystem.feign.WorkloadInterface;
 import com.gym.gymsystem.service.AuthorizationService;
 import com.gym.gymsystem.service.TraineeService;
 import com.gym.gymsystem.service.TrainerService;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "/training")
@@ -29,7 +32,7 @@ public class TrainingController {
     private final TrainerService trainerService;
     private final AuthorizationService authorizationService;
 
-    public TrainingController(TrainingService trainingService, TraineeService traineeService, TrainerService trainerService, AuthorizationService authorizationService) {
+    public TrainingController(TrainingService trainingService, TraineeService traineeService, TrainerService trainerService, AuthorizationService authorizationService, WorkloadInterface workloadInterface) {
         this.trainingService = trainingService;
         this.traineeService = traineeService;
         this.trainerService = trainerService;
@@ -49,12 +52,16 @@ public class TrainingController {
     @PutMapping("/trainee/{traineeUsername}")
     public ResponseEntity<List<TrainerInfo>> updateTraineeTrainers(
             @PathVariable("traineeUsername") String findUsername,
-            @RequestBody UpdateTraineeTrainersRequest request) {
+            @RequestBody UpdateTraineeTrainersRequest request,
+            @RequestHeader(value = "X-Transaction-Id", required = false) String transactionId) {
 
-        if (!authorizationService.isAdmin()  && !authorizationService.isAuthenticatedUser(findUsername)) {
+        if (!authorizationService.isAdmin() && !authorizationService.isAuthenticatedUser(findUsername)) {
             throw new CustomAccessDeniedException("You do not have permission to update this trainee's trainers.");
         }
-        List<Training> updatedTrainers = trainingService.updateTraineeTrainersByUsername(findUsername, request.getTrainersUsernames());
+        if (transactionId == null) {
+            transactionId = UUID.randomUUID().toString();
+        }
+        List<Training> updatedTrainers = trainingService.updateTraineeTrainersByUsername(findUsername, request.getTrainersUsernames(),transactionId);
         List<TrainerInfo> trainerInfos = updatedTrainers.stream()
                 .flatMap(training -> training.getTrainers().stream())
                 .map(trainer -> new TrainerInfo(
@@ -129,9 +136,13 @@ public class TrainingController {
     }
 
     @PostMapping
-    public ResponseEntity<Message> addTraining(@RequestBody @Valid AddTrainingRequest request) {
+    public ResponseEntity<Message> addTraining(@RequestBody @Valid AddTrainingRequest request,
+                                               @RequestHeader(value = "X-Transaction-Id", required = false) String transactionId) {
         if (!authorizationService.isAdmin() && !authorizationService.isAuthenticatedUser(request.getTrainerUsername())) {
             throw new CustomAccessDeniedException("You do not have permission to add trainings.");
+        }
+        if (transactionId == null) {
+            transactionId = UUID.randomUUID().toString();
         }
         TrainingType type = new TrainingType();
         type.setTrainingTypeName(request.getTrainingType());
@@ -145,7 +156,7 @@ public class TrainingController {
                 .trainingDuration(request.getTrainingDuration())
                 .build();
 
-        trainingService.createTraining(training);
+        trainingService.createTraining(training,transactionId);
         return ResponseEntity.ok(new Message("Training added successfully"));
     }
 }

@@ -1,20 +1,20 @@
 package com.gym.gymsystem.service;
 
 import com.gym.gymsystem.dto.trainer.TrainerInfo;
+import com.gym.gymsystem.dto.workload.WorkloadRequest;
 import com.gym.gymsystem.entity.*;
+import com.gym.gymsystem.feign.WorkloadInterface;
 import com.gym.gymsystem.repository.TrainingRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,6 +27,8 @@ class TrainingServiceTest {
 
     @Mock
     private UserService userService;
+    @Mock
+    private WorkloadInterface workloadInterface;
     @Mock
     private TrainingTypeService trainingTypeService;
 
@@ -43,16 +45,38 @@ class TrainingServiceTest {
 
     @Test
     public void testCreateTraining() {
+        Trainer trainer1 = new Trainer();
+        User user1 = new User();
+        user1.setUsername("trainer1");
+        user1.setFirstName("John");
+        user1.setLastName("Doe");
+        user1.setIsActive(true);
+        trainer1.setUser(user1);
+
+        Trainer trainer2 = new Trainer();
+        User user2 = new User();
+        user2.setUsername("trainer2");
+        user2.setFirstName("Jane");
+        user2.setLastName("Smith");
+        user2.setIsActive(true);
+        trainer2.setUser(user2);
+
+        List<Trainer> trainers = Arrays.asList(trainer1, trainer2);
+
         String username = "username";
         String password = "password";
         Training training = new Training();
         training.setName("Box");
+        training.setTrainingDate(LocalDate.now().atStartOfDay().plusDays(1));
         training.setTrainingType(new TrainingType());
+        training.setTrainers(trainers);
+
         when(trainingRepository.saveAndFlush(any(Training.class))).thenReturn(training);
         when(trainingTypeService.getTrainingTypeByName(training.getTrainingType().getTrainingTypeName())).thenReturn(null);
         when(userService.usernamePasswordMatches(username,password)).thenReturn(true);
+        when(workloadInterface.updateWorkload(any(WorkloadRequest.class),any(String.class))).thenReturn(HttpStatus.OK);
 
-        Training result = trainingService.createTraining(training);
+        Training result = trainingService.createTraining(training,"1");
 
         assertNotNull(result);
         verify(trainingRepository).saveAndFlush(training);

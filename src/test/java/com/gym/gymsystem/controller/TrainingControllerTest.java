@@ -105,7 +105,7 @@ public class TrainingControllerTest {
         training.setTrainers(Arrays.asList(trainer1, trainer2));
 
         when(authorizationService.isAdmin()).thenReturn(true);
-        when(trainingService.updateTraineeTrainersByUsername(anyString(), anyList()))
+        when(trainingService.updateTraineeTrainersByUsername(anyString(), anyList(),any(String.class)))
                 .thenReturn(List.of(training));
 
         mockMvc.perform(put("/training/trainee/{traineeUsername}", "traineeUser")
@@ -222,12 +222,13 @@ public class TrainingControllerTest {
         when(traineeService.getTraineeProfileByUsername( anyString()))
                 .thenReturn(trainee);
         when(trainerService.findByUsername(anyString())).thenReturn(trainer1);
-        when(trainingService.createTraining( any(Training.class)))
+        when(trainingService.createTraining( any(Training.class),any(String.class)))
                 .thenReturn(null);
 
         mockMvc.perform(post("/training")
                         .param("username", "username")
                         .param("password", "password")
+                        .header("X-Transaction-Id", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
